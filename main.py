@@ -108,6 +108,16 @@ def handle_connection(sock, is_tcp):
 
     response = resolve_query(query)
 
+    # Check the response size, and truncate if it exceeds 512bytes.
+    if not is_tcp:
+        try:
+            response.to_wire(max_size=512)
+        except dns.exception.TooBig:
+            response.flags |= dns.flags.TC
+            response.answer = []
+            response.authority = []
+            response.additional = []
+
     if DEBUG_MODE:
         print("Response for", response)
 

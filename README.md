@@ -47,12 +47,11 @@ The following related implementations have been omitted and are not available.
 - CNANE processing
 - DNAME processing
 - DNSSEC processing (DNSKEY, RRSIG, DS, NSEC, NSEC3...)
-- additional options such as ratelimitting, policy actions, view, etc...
+- additional options such as ratelimiting, policy actions, view, etc...
 
 The following implementations may be added in the future, but are not available at this time.
 
 - EDNS
-- truncating large response
 
 The following have been implemented and are available.
 
@@ -62,4 +61,4 @@ The following have been implemented and are available.
   - NXDOMAIN response
   - NODATA response
   - simply return the record corresponding to qname and qtype (A, AAAA, TXT, MX, etc...)
-
+- truncating large response
