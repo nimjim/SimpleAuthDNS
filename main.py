@@ -145,10 +145,17 @@ def resolve_query(query):
         response.set_rcode(dns.rcode.REFUSED)
         return response
 
-    # Return NOTIMP for RR Types which SimpleAuthoritativeDNS does not support
+    # Return NOTIMP for RR Types which SimpleAuthDNS does not support
     # https://www.iana.org/assignments/dns-parameters/dns-parameters.xhtml#dns-parameters-4
     if qtype >= 99:
         response.set_rcode(dns.rcode.NOTIMP)
+        return response
+
+    def add_additional(response, target):
+        for rdtype in (dns.rdatatype.A, dns.rdatatype.AAAA):
+            additional_rrset = zone.get_rrset(target, rdtype)
+            if additional_rrset:
+                response.additional.append(additional_rrset)
         return response
 
     # Check for delegation
@@ -164,10 +171,7 @@ def resolve_query(query):
                 ns_target = rdata.target
                 if ns_target.is_subdomain(check_name):
                     # if ns target is in-Bailiwick, add glue record
-                    for rrtype in (dns.rdatatype.A, dns.rdatatype.AAAA):
-                        rrset = zone.get_rrset(ns_target, rrtype)
-                        if rrset:
-                            response.additional.append(rrset)
+                    response = add_additional(response, ns_target)
             return response
 
     # Look for qname
@@ -192,6 +196,16 @@ def resolve_query(query):
         response.set_rcode(dns.rcode.NOERROR)
         response.answer.append(rrset)
         response.flags |= dns.flags.AA
+        # If needed, add additional section
+        if qtype == dns.rdatatype.NS:
+            for ns_rdata in rrset.to_rdataset():
+                response = add_additional(response, ns_rdata.target)
+        elif qtype == dns.rdatatype.MX:
+            for mx_rdata in rrset.to_rdataset():
+                response = add_additional(response, mx_rdata.exchange)
+        elif qtype == dns.rdatatype.SRV:
+            for srv_rdata in rrset.to_rdataset():
+                response = add_additional(response, srv_rdata.target)
     return response
 
 def main():
